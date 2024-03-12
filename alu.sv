@@ -1,5 +1,5 @@
 `default_nettype none
-`include types.vh
+`include "types.vh"
 
 module alu(
 input alu_op_t,
@@ -9,7 +9,7 @@ output logic[15:0] result);
 always_comb
   unique case (alu_op_t)
     ALU_ADD: result = alu_input1 + alu_input2;
-    ALU_SUB: result = alu_input1 + twos_comp_alu_input2;
+    ALU_SUB: result = alu_input1 - alu_input2;
     ALU_LUI: result = alu_input2;
     ALU_SLL: result = alu_input1 << (alu_input2 & 16'h1F);
     ALU_SRL: result = alu_input1 >> (alu_input2 & 16'h1F);
