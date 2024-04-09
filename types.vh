@@ -14,3 +14,17 @@ typedef enum logic [3:0] {
     ALU_OR,
     ALU_DC = 'bx            // Don't care value
 } alu_op_t;
+
+
+typedef struct packed {
+  opcode_t opcode,
+  logic[2:0] rs1,
+  logic[2:0] rs2,
+  logic[2:0] rd,
+  logic[3:0] instr,
+  logic is_double_word,
+  mem_op_t mem_op,
+  br_op_t br_op,
+  logic[8:0] offset,
+  logic[23:0] mem_addr
+}

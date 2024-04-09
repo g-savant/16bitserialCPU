@@ -3,7 +3,7 @@
 
 module alu(
 input alu_op_t,
-input logic[7:0] alu_input1, alu_input2,
+input logic[15:0] alu_input1, alu_input2,
 output logic[15:0] result);
 
 always_comb
