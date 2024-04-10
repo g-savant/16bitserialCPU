@@ -1,5 +1,9 @@
 `default_nettype none
 
+`include "reg_file.sv"
+`include "alu.sv"
+`include "types.vh"
+
 module cpu_core(
   input logic clk, rst,
   input logic[7:0] in_bus,
