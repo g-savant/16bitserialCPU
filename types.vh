@@ -16,6 +16,32 @@ typedef enum logic [3:0] {
 } alu_op_t;
 
 
+typedef enum logic [2:0] {
+    R_TYPE,
+    I_TYPE,
+    B_TYPE,
+    J_TYPE,
+    M_TYPE
+} opcode_t;
+
+typedef enum logic[2:0] {
+    LS_BYTE,
+    LS_HW,
+    LS_W,
+    LS_NONE
+} mem_op_t;
+
+
+typedef enum logic[2:0] {
+    BR_EQ,
+    BR_NE,
+    BR_LT,
+    BR_GE,
+    BR_LTU,
+    BR_GEU,
+    BR_NONE
+} br_op_t;
+
 typedef struct packed {
   opcode_t opcode,
   logic[2:0] rs1,
@@ -27,4 +53,4 @@ typedef struct packed {
   br_op_t br_op,
   logic[8:0] offset,
   logic[23:0] mem_addr
-}
+} signals_t;
