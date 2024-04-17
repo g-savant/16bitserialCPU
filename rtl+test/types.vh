@@ -15,13 +15,19 @@ typedef enum logic [3:0] {
     ALU_DC = 'bx            // Don't care value
 } alu_op_t;
 
+typedef enum logic {
+  LOAD,
+  STORE
+} ldst_t;
+
 
 typedef enum logic [2:0] {
     R_TYPE,
     I_TYPE,
     B_TYPE,
     J_TYPE,
-    M_TYPE
+    M_TYPE,
+    NOP_TYPE
 } opcode_t;
 
 typedef enum logic[2:0] {
@@ -42,6 +48,17 @@ typedef enum logic[2:0] {
     BR_NONE
 } br_op_t;
 
+typedef enum logic[2:0] {
+    ADD,
+    SUB,
+    OR, 
+    XOR,
+    SLL,
+    SRL, 
+    SRA,
+    SLT
+} alu_op_t;
+
 typedef struct packed {
   opcode_t opcode,
   logic[2:0] rs1,
@@ -52,5 +69,11 @@ typedef struct packed {
   mem_op_t mem_op,
   br_op_t br_op,
   logic[8:0] offset,
-  logic[23:0] mem_addr
+  logic[23:0] mem_addr,
+  logic useImm,
+  logic useAddr,
+  br_op_t br_op,
+  alu_op_t alu_op,
+  ldst_t ldst;
+
 } signals_t;
