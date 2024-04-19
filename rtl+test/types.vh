@@ -22,12 +22,12 @@ typedef enum logic {
 
 
 typedef enum logic [2:0] {
-    R_TYPE,
-    I_TYPE,
-    B_TYPE,
-    J_TYPE,
-    M_TYPE,
-    NOP_TYPE
+    R_TYPE = 3'b000,
+    I_TYPE = 3'b001,
+    B_TYPE = 3'b010,
+    J_TYPE = 3'b011,
+    M_TYPE = 3'b100,
+    NOP_TYPE = 3'b101
 } opcode_t;
 
 typedef enum logic[2:0] {
@@ -48,15 +48,15 @@ typedef enum logic[2:0] {
     BR_NONE
 } br_op_t;
 
-typedef enum logic[2:0] {
-    ADD,
-    SUB,
-    OR, 
-    XOR,
-    SLL,
-    SRL, 
-    SRA,
-    SLT
+typedef enum logic[3:0] {
+    ADD = 4'b0000,
+    SUB = 4'b0001,
+    OR = 4'b0010, 
+    XOR = 4'b0011,
+    SLL = 4'b0100,
+    SRL = 4'b0101, 
+    SRA = 4'b0110,
+    SLT = 4'b0111
 } alu_op_t;
 
 typedef struct packed {
