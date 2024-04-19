@@ -35,9 +35,10 @@ void setup() {
 
 void loop() {
 
-  bool shift_done = digitalRead(16);
-  bool data_out_ready = digitalRead(17);
+  int shift_done = digitalRead(16);
+  int data_out_ready = digitalRead(17);
+  int data_in_ready = analogRead(pin);
+  int data
 
-  
   
 }

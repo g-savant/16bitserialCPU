@@ -2,12 +2,12 @@
 `include "types.vh"
 
 module alu(
-input alu_op_t,
+input alu_op_t op,
 input logic[15:0] alu_input1, alu_input2,
 output logic[15:0] result);
 
 always_comb
-  unique case (alu_op_t)
+  unique case (op)
     ALU_ADD: result = alu_input1 + alu_input2;
     ALU_SUB: result = alu_input1 - alu_input2;
     ALU_LUI: result = alu_input2;

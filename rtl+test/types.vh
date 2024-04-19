@@ -16,8 +16,8 @@ typedef enum logic [3:0] {
 } alu_op_t;
 
 typedef enum logic {
-  LOAD,
-  STORE
+  LOAD = 1'b0,
+  STORE = 1'b1
 } ldst_t;
 
 
@@ -69,11 +69,21 @@ typedef struct packed {
   mem_op_t mem_op,
   br_op_t br_op,
   logic[8:0] offset,
-  logic[23:0] mem_addr,
+  logic[14:0] addr_offset,
   logic useImm,
   logic useAddr,
   br_op_t br_op,
   alu_op_t alu_op,
-  ldst_t ldst;
+  ldst_t ldst
 
-} signals_t;
+} dec_sig_t;
+
+typedef struct packed {
+  logic go,
+  logic instr_shift_in,
+  logic mdr_shift_out,
+  logic mar_shift_out,
+  logic mdr_shift_in,
+  logic pc_shift_out,
+  logic shift_done
+} ctrl_sig_t;
