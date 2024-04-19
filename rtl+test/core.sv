@@ -30,7 +30,7 @@ logic valid_instr, error_instr;
 
 logic[15:0] instr, mdr_in, mdr_out, mar_in, mar_out, pc, in_pc;
 
-logic[15:0] alu_pc, pc_next;
+logic[15:0] alu_pc, pc_next, pc_offset;
 
 logic[15:0] rs1_data, rs2_data, rd_data;
 
@@ -139,6 +139,13 @@ always_comb begin
   endcase
 
   mdr_in = (dec.opcode == M_TYPE) ? rs2_data : alu_result;
+  
+  mar_in = alu_result;
+
+  //3 cases, pc is set to value in jump, pc is pc + offset ( branch), pc is pc+4
+  pc_offset = (dec.opcode == B_TYPE) ? dec.addr_offset : 4; //jump will have pure address
+
+  pc_in = (dec.opcode == J_TYPE) ? offset: pc + pc_offset;
 end
 
 
