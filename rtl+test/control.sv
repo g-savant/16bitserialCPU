@@ -42,6 +42,8 @@ module control(
         ctrl.pc_en = 1'b1;
         if(signals.opcode == M_TYPE) begin
           ns = WAIT_LOAD;
+          ctrl.mar_load = 1'b1;
+          ctrl.mdr_load =1'b1;
         end else begin
           ns = WAIT_SENDPC;
         end
@@ -65,6 +67,8 @@ module control(
           ctrl.mar_shift_out = 1'b1;
         end else if(signals.opcode == M_TYPE & (signals.mem_op == SW | signals.mem_op == SB | signals.mem_op == SHW)) begin
           ns = SSHIFT_DATA1;
+          bus_mar = 1'b1;
+          ctrl.mar_shift_out = 1'b1;
         end else begin
           error <= 1'b1;
           ns = ADDR_SHIFT2;

@@ -8,8 +8,8 @@ output logic[15:0] result);
 
 always_comb
   unique case (op)
-    ADD: result = alu_input1 + alu_input2;
-    SUB: result = alu_input1 - alu_input2;
+    ADD: result = $signed(alu_input1) + $signed(alu_input2);
+    SUB: result = $signed(alu_input1) - $signed(alu_input2);
     SLL: result = alu_input1 << (alu_input2 & 16'h1F);
     SRL: result = alu_input1 >> (alu_input2 & 16'h1F);
     SRA: result = $signed(alu_input1) >>> (alu_input2 & 16'h1F);

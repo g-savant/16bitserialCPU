@@ -146,10 +146,10 @@ always_comb begin
     M_TYPE: begin
       if(dec.mem_op == LW | dec.mem_op == LB | dec.mem_op == LHW) begin
         alu_input1 = rs1_data;
-        alu_input2 = dec.addr_offset;
+        alu_input2 = imm;
       end else if(dec.mem_op == SW | dec.mem_op == SB | dec.mem_op == SHW) begin
         alu_input1 = rs1_data; 
-        alu_input2 = dec.addr_offset;
+        alu_input2 = imm;
       end
     end
   endcase
@@ -161,13 +161,13 @@ always_comb begin
   //3 cases, pc is set to value in jump, pc is pc + offset ( branch), pc is pc+4, double word
   case(dec.opcode)
     J_TYPE: pc_in = dec.offset;
-    B_TYPE: pc_in = pc + dec.addr_offset;
+    B_TYPE: pc_in = pc + dec.offset;
     I_TYPE: pc_in = pc + 2;
     M_TYPE: pc_in = pc + 2;
     default: pc_in = pc + 1;
   endcase
   
-  // pc_offset = (dec.opcode == B_TYPE) ? dec.addr_offset : 4; //jump will have pure address
+  // pc_offset = (dec.opcode == B_TYPE) ? dec.offset : 4; //jump will have pure address
   
 
   // pc_in = (dec.opcode == J_TYPE) ? dec.offset : pc + pc_offset;

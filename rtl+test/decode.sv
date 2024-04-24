@@ -48,6 +48,7 @@ module instruction_decode(
         signals.rd = instruction[11:9];
         signals.rs1 = instruction[5:3];
         signals.rs2 = instruction[8:6];
+        signals.alu_op = ADD;
         signals.mem_op = mem_op_t'(instruction[15:12]);
         if(signals.mem_op == LW | signals.mem_op == LB | signals.mem_op == LHW) begin
           signals.rfWrite = 1'b1;
