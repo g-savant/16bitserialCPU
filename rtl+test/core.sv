@@ -1,56 +1,61 @@
 `default_nettype none
 
+`include "types.vh"
 `include "reg_file.sv"
 `include "alu.sv"
-`include "types.vh"
 `include "control.sv"
 `include "components.sv"
 `include "decode.sv"
 
-
 //12 in 12 out
 module cpu_core(
   input logic clk, rst,
-  input logic ard_data_ready,
+  input logic ard_data_ready, //could specify what kind of data send ard_instr, ard_data, 
   input logic ard_receive_ready,
   input logic[7:0] in_bus,
-  input logic data_in_ready,
-  output logic data_out_ready, shift_done,
-  output logic[7:0] out_bus,
+  output logic bus_pc, bus_mar, bus_mdr,
+  output logic[7:0] out_bus
 );
 
-
-logic pc_en, error;
-
-logic[2:0] aluinp1_sel, aluinp2_sel;
 
 logic[15:0] alu_input1, alu_input2, alu_result;
 
 logic valid_instr, error_instr;
 
-logic[15:0] instr, mdr_in, mdr_out, mar_in, mar_out, pc, in_pc;
+logic[15:0] instr, mdr_in, mdr_out, mar_in, mar_out, pc;
 
-logic[15:0] alu_pc, pc_next, pc_offset;
+logic[7:0] mdr_bus_out, mar_bus_out, pc_bus_out;
+
+logic[15:0] pc_in, imm;
 
 logic[15:0] rs1_data, rs2_data, rd_data;
 
 ctrl_sig_t ctrl;
 
+logic halt;
+
+logic error_pc, error_mdr, error_mar, error_ctrl, reg_we;
 dec_sig_t dec;
 //declare components
 
 
 
-control ctrl( .clk(clk),
+control ctrl_fsm( .clk(clk),
               .rst(rst),
-              .done(),
               .ard_data_ready(ard_data_ready),
               .ard_receive_ready(ard_receive_ready),
               .signals(dec),
-              .ctrl(ctrl));
+              .ctrl(ctrl),
+              .bus_pc,
+              .bus_mdr,
+              .bus_mar,
+              .error(error_ctrl),
+              .halt(halt),
+              .valid_instr(valid_instr));
 
-decode dec(.instruction(instr),
-           .signals(dec));
+instruction_decode dec_instr(.instruction(instr),
+                              .signals(dec),
+                              .halt(halt));
 
 reg_file rf(.clk(clk),
             .rst(rst),
@@ -59,14 +64,17 @@ reg_file rf(.clk(clk),
             .rd(dec.rd),
             .rd_data(rd_data),
             .rs1_data(rs1_data),
-            .rs2_data(rs2_data));
+            .rs2_data(rs2_data),
+            .rd_we(reg_we));
 
-instr_shift_register dec( .clk(clk),
+instr_shift_register instr_shift( .clk(clk),
                           .rst(rst),
                           .serial_in(in_bus),
                           .instruction(instr),
+                          .imm(imm),
                           .valid(valid_instr),
-                          .error(error_instr));
+                          .error(error_instr),
+                          .data_ready(ard_data_ready));
 
 
 alu alu(.alu_input1(alu_input1),
@@ -74,27 +82,25 @@ alu alu(.alu_input1(alu_input1),
         .op(dec.alu_op),
         .result(alu_result));
 
-eight_bit_spispo pc_shift_reg(.clk(clk),
-                             .rst(rst),
-                             .load(pc_en),
-                             .shift_out(ctrl.pc_shift_out),
-                             .shift_in(1'b0),
-                             .serial_in(8'b0),
-                             .prll_in(in_pc),
-                             .prll_out(pc),
-                             .serial_out(out_bus),
-                             .error(error));
+pc_shift_reg pc_reg(.clk(clk),
+                    .rst(rst),
+                    .load(ctrl.pc_en),
+                    .shift_out(ctrl.pc_shift_out),
+                    .prll_in(pc_in),
+                    .prll_out(pc),
+                    .serial_out(pc_bus_out),
+                    .error(error_pc));
 
 eight_bit_spispo mdr_shift_reg(.clk(clk),
                              .rst(rst),
                              .load(ctrl.mdr_load),
                              .shift_out(ctrl.mdr_shift_out),
                              .shift_in(ctrl.mdr_shift_in),
-                             .serial_in(bus_in),
+                             .serial_in(in_bus),
                              .prll_in(mdr_in),
                              .prll_out(mdr_out),
-                             .serial_out(out_bus),
-                             .error(error));
+                             .serial_out(mdr_bus_out),
+                             .error(error_mdr));
 
 eight_bit_spispo mar_shift_reg(.clk(clk),
                               .rst(rst),
@@ -104,8 +110,16 @@ eight_bit_spispo mar_shift_reg(.clk(clk),
                               .serial_in(8'b0),
                               .prll_in(mar_in),
                               .prll_out(mar_out),
-                              .serial_out(out_bus),
-                              .error(error));
+                              .serial_out(mar_bus_out),
+                              .error(error_mar));
+always_comb begin
+  case({bus_mar, bus_mdr, bus_pc})
+    3'b001: out_bus = pc_bus_out;
+    3'b010: out_bus = mdr_bus_out;
+    3'b100: out_bus = mar_bus_out;
+    default: out_bus = 'd0;
+  endcase
+end
 
 //minor components
 
@@ -114,10 +128,12 @@ always_comb begin
     R_TYPE: begin
       alu_input1 = rs1_data;
       alu_input2 = rs2_data;
+      rd_data = alu_result;
     end
     I_TYPE: begin
       alu_input1 = rs1_data;
-      alu_input2 = dec.useImm ? instr[11:0] : rs2_data;
+      alu_input2 = imm;
+      rd_data = alu_result;
     end
     B_TYPE: begin
       alu_input1 = rs1_data;
@@ -128,24 +144,35 @@ always_comb begin
       alu_input2 = dec.offset;
     end
     M_TYPE: begin
-      if(ldst == LOAD) begin
+      if(dec.mem_op == LW | dec.mem_op == LB | dec.mem_op == LHW) begin
         alu_input1 = rs1_data;
         alu_input2 = dec.addr_offset;
-      end else if(ldst == STORE) begin
+      end else if(dec.mem_op == SW | dec.mem_op == SB | dec.mem_op == SHW) begin
         alu_input1 = rs1_data; 
         alu_input2 = dec.addr_offset;
       end
     end
   endcase
 
-  mdr_in = (dec.opcode == M_TYPE) ? rs2_data : alu_result;
+  mdr_in = (ard_data_ready) ? in_bus : rs2_data; // could be bus or register
   
   mar_in = alu_result;
 
-  //3 cases, pc is set to value in jump, pc is pc + offset ( branch), pc is pc+4
-  pc_offset = (dec.opcode == B_TYPE) ? dec.addr_offset : 4; //jump will have pure address
+  //3 cases, pc is set to value in jump, pc is pc + offset ( branch), pc is pc+4, double word
+  case(dec.opcode)
+    J_TYPE: pc_in = dec.offset;
+    B_TYPE: pc_in = pc + dec.addr_offset;
+    I_TYPE: pc_in = pc + 2;
+    M_TYPE: pc_in = pc + 2;
+    default: pc_in = pc + 1;
+  endcase
+  
+  // pc_offset = (dec.opcode == B_TYPE) ? dec.addr_offset : 4; //jump will have pure address
+  
 
-  pc_in = (dec.opcode == J_TYPE) ? offset: pc + pc_offset;
+  // pc_in = (dec.opcode == J_TYPE) ? dec.offset : pc + pc_offset;
+
+  reg_we = (valid_instr & dec.rfWrite) ? 1'b1 : 1'b0;
 end
 
 
