@@ -14,6 +14,7 @@ module instr_shift_register(
 
   opcode_t opcode;
 
+  assign error = 1'b0;
   assign valid = ((opcode != M_TYPE & opcode != I_TYPE) & count == 2) | ((opcode == M_TYPE | opcode == I_TYPE) & count == 4);
 
   assign opcode = instruction[2:0];
@@ -21,12 +22,12 @@ module instr_shift_register(
 
   assign halt = (opcode == SYS_END & valid);
   
-  assign error =  (opcode != R_TYPE) & 
-                  (opcode != I_TYPE) & 
-                  (opcode != B_TYPE) & 
-                  (opcode != J_TYPE) & 
-                  (opcode != M_TYPE) & 
-                  (opcode != SYS_END) & count >= 2;
+  // assign error =  (opcode != R_TYPE) & 
+  //                 (opcode != I_TYPE) & 
+  //                 (opcode != B_TYPE) & 
+  //                 (opcode != J_TYPE) & 
+  //                 (opcode != M_TYPE) & 
+  //                 (opcode != SYS_END) & count >= 2;
 
   always_ff @(posedge clk) begin
     if(rst) begin
@@ -34,9 +35,6 @@ module instr_shift_register(
       count <= 'd0;
       imm <= 'd0;
     end else begin
-      if(count == 4 | ((opcode == R_TYPE | opcode == B_TYPE | opcode == J_TYPE | opcode == SYS_END) & count == 2)) begin
-        count <= 'd0;
-      end
       if(data_ready) begin
         count <= count + 1;
         if(count >= 2) begin
@@ -47,7 +45,7 @@ module instr_shift_register(
         end else begin
           instruction <= {serial_in, instruction[15:8]};
         end
-      end
+      end else count <= 'd0;
     end
   end
 endmodule
