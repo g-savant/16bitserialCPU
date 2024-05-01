@@ -6,7 +6,8 @@ module instr_shift_register(
   input logic[7:0] serial_in,
   output logic[15:0] instruction, //to compensate for double word
   output logic[15:0] imm,
-  output logic valid, error
+  output logic valid, error,
+  output logic halt
 );
 
   logic[4:0] count;
@@ -15,9 +16,11 @@ module instr_shift_register(
 
   assign valid = ((opcode != M_TYPE & opcode != I_TYPE) & count == 2) | ((opcode == M_TYPE | opcode == I_TYPE) & count == 4);
 
-  assign opcode = opcode_t'(instruction[2:0]);
+  assign opcode = instruction[2:0];
 
 
+  assign halt = (opcode == SYS_END & valid);
+  
   assign error =  (opcode != R_TYPE) & 
                   (opcode != I_TYPE) & 
                   (opcode != B_TYPE) & 

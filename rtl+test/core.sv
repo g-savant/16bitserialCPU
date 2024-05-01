@@ -13,7 +13,7 @@ module cpu_core(
   input logic ard_data_ready, //could specify what kind of data send ard_instr, ard_data, 
   input logic ard_receive_ready,
   input logic[7:0] in_bus,
-  output logic bus_pc, bus_mar, bus_mdr,
+  output logic bus_pc, bus_mar, bus_mdr, halt,
   output logic[7:0] out_bus
 );
 
@@ -31,8 +31,6 @@ logic[15:0] pc_in, imm;
 logic[15:0] rs1_data, rs2_data, rd_data;
 
 ctrl_sig_t ctrl;
-
-logic halt;
 
 logic error_pc, error_mdr, error_mar, error_ctrl, reg_we;
 dec_sig_t dec;
@@ -54,8 +52,7 @@ control ctrl_fsm( .clk(clk),
               .valid_instr(valid_instr));
 
 instruction_decode dec_instr(.instruction(instr),
-                              .signals(dec),
-                              .halt(halt));
+                              .signals(dec));
 
 reg_file rf(.clk(clk),
             .rst(rst),
@@ -74,7 +71,8 @@ instr_shift_register instr_shift( .clk(clk),
                           .imm(imm),
                           .valid(valid_instr),
                           .error(error_instr),
-                          .data_ready(ard_data_ready));
+                          .data_ready(ard_data_ready),
+                          .halt(halt));
 
 
 alu alu(.alu_input1(alu_input1),
@@ -124,6 +122,9 @@ end
 //minor components
 
 always_comb begin
+  alu_input1 = rs1_data;
+  alu_input2 = rs2_data;
+  rd_data = alu_result;
   case(dec.opcode)
     R_TYPE: begin
       alu_input1 = rs1_data;
@@ -141,12 +142,13 @@ always_comb begin
     end
     J_TYPE: begin
       alu_input1 = pc;
-      alu_input2 = dec.offset;
+      alu_input2 = 4;
     end
     M_TYPE: begin
       if(dec.mem_op == LW | dec.mem_op == LB | dec.mem_op == LHW) begin
         alu_input1 = rs1_data;
         alu_input2 = imm;
+        rd_data = mdr_out;
       end else if(dec.mem_op == SW | dec.mem_op == SB | dec.mem_op == SHW) begin
         alu_input1 = rs1_data; 
         alu_input2 = imm;
