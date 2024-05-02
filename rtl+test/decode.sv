@@ -40,7 +40,7 @@ module instruction_decode(
       end
       J_TYPE: begin
         signals.is_double_word = 1'b0;
-        signals.offset = {instruction[15:12], instruction[8:4]};
+        signals.addr_offset = {instruction[15:12], instruction[8:4]};
         signals.jump_type = instruction[6];
         signals.rd = instruction[11:9];
         signals.alu_op = ADD;

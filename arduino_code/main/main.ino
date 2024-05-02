@@ -42,3 +42,88 @@ void loop() {
 
   
 }
+
+void setup() {
+  // put your setup code here, to run once:
+  
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
+
+void run_code() {
+  rst = LOW;
+  ard_receive_ready = LOW;
+  ard_data_ready = LOW;
+  memset(data_memory, 0, sizeof(data_memory));  // Assuming data_memory is an array
+  pc = 0;
+  in_bus = 0;
+  delay(1);  // Simulate @(posedge clk)
+  rst = HIGH;
+  delay(1);  // Simulate @(posedge clk)
+  rst = LOW;
+  ard_receive_ready = HIGH;
+  delay(3);  // Simulate @(posedge clk)
+
+  while(halt == LOW) {
+    Serial.print("PC: ");
+    Serial.println(pc, HEX);
+    if(bus_pc) {
+      pc = (out_bus << 8) | (pc & 0xFF);
+      delay(1);  // Simulate @(posedge clk)
+      pc = (out_bus << 8) | (pc & 0xFF);
+      delay(1);  // Simulate @(posedge clk)
+      ard_receive_ready = LOW;
+      ard_data_ready = HIGH;
+      in_bus = instr_memory[pc] & 0xFF;
+      delay(1);  // Simulate @(posedge clk)
+      ard_data_ready = HIGH;
+      in_bus = (instr_memory[pc] >> 8) & 0xFF;
+      delay(1);  // Simulate @(posedge clk)
+      if((instr_memory[pc] & 0xF) == I_TYPE || (instr_memory[pc] & 0xF) == M_TYPE) {
+        ard_data_ready = HIGH;
+        in_bus = instr_memory[pc+1] & 0xFF;
+        delay(1);  // Simulate @(posedge clk)
+        ard_data_ready = HIGH;
+        in_bus = (instr_memory[pc+1] >> 8) & 0xFF;
+        delay(1);  // Simulate @(posedge clk)
+        ard_data_ready = LOW;
+      } else {
+        ard_data_ready = LOW;
+      }
+      ard_receive_ready = HIGH;
+      delay(1);  // Simulate @(posedge clk)
+    } else if(bus_mar) {
+      address = (out_bus << 8) | (address & 0xFF);
+      delay(1);  // Simulate @(posedge clk)
+      address = (out_bus << 8) | (address & 0xFF);
+      delay(1);  // Simulate @(posedge clk)
+      if(bus_mdr == LOW) {
+        ard_receive_ready = LOW;
+        ard_data_ready = HIGH;
+        in_bus = data_memory[address] & 0xFF;
+        delay(1);  // Simulate @(posedge clk)
+        ard_data_ready = HIGH;
+        in_bus = (data_memory[address] >> 8) & 0xFF;
+        delay(1);  // Simulate @(posedge clk)
+        ard_data_ready = LOW;
+        ard_receive_ready = HIGH;
+        delay(1);  // Simulate @(posedge clk)
+      } else {
+        load_data = (out_bus << 8) | (load_data & 0xFF);
+        delay(1);  // Simulate @(posedge clk)
+        load_data = (out_bus << 8) | (load_data & 0xFF);
+        delay(1);  // Simulate @(posedge clk)
+        data_memory[address] = load_data;
+        ard_receive_ready = HIGH;
+        ard_data_ready = LOW;
+        delay(1);  // Simulate @(posedge clk)
+      }
+    } else {
+      delay(1);  // Simulate @(posedge clk)
+    }
+  }
+}

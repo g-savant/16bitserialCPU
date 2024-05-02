@@ -139,6 +139,7 @@ always_comb begin
     B_TYPE: begin
       alu_input1 = rs1_data;
       alu_input2 = rs2_data;
+      rd_data = alu_result;
     end
     J_TYPE: begin
       alu_input1 = pc;
@@ -162,8 +163,18 @@ always_comb begin
 
   //3 cases, pc is set to value in jump, pc is pc + offset ( branch), pc is pc+4, double word
   case(dec.opcode)
-    J_TYPE: pc_in = dec.offset;
-    B_TYPE: pc_in = pc + dec.offset;
+    J_TYPE: pc_in = dec.addr_offset;
+    B_TYPE: begin
+      case(dec.b_type)
+        BR_EQ: pc_in = (rs1_data == rs2_data) ? pc + dec.offset : pc + 1;
+        BR_NE: pc_in = (rs1_data != rs2_data) ? pc + dec.offset : pc + 1;
+        BR_LT: pc_in = ($signed(rs1_data) < $signed(rs2_data)) ? pc + dec.offset : pc + 1;
+        BR_GE: pc_in = ($signed(rs1_data) >= $signed(rs2_data)) ? pc + dec.offset : pc + 1;
+        BR_LTU: pc_in = (rs1_data < rs2_data) ? pc + dec.offset : pc + 1;
+        BR_GEU: pc_in = (rs1_data >= rs2_data) ? pc + dec.offset : pc + 1;
+        default: pc_in = pc + 1;
+      endcase
+    end 
     I_TYPE: pc_in = pc + 2;
     M_TYPE: pc_in = pc + 2;
     default: pc_in = pc + 1;
