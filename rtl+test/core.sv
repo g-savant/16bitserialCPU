@@ -10,6 +10,7 @@
 //12 in 12 out
 module cpu_core(
   input logic clk, rst,
+  input logic ard_clk,
   input logic ard_data_ready, //could specify what kind of data send ard_instr, ard_data, 
   input logic ard_receive_ready,
   input logic[7:0] in_bus,
@@ -38,7 +39,7 @@ dec_sig_t dec;
 
 
 
-control ctrl_fsm( .clk(clk),
+control ctrl_fsm( .clk(ard_clk),
               .rst(rst),
               .ard_data_ready(ard_data_ready),
               .ard_receive_ready(ard_receive_ready),
@@ -54,7 +55,7 @@ control ctrl_fsm( .clk(clk),
 instruction_decode dec_instr(.instruction(instr),
                               .signals(dec));
 
-reg_file rf(.clk(clk),
+reg_file rf(.clk(ard_clk),
             .rst(rst),
             .rs1(dec.rs1),
             .rs2(dec.rs2),
@@ -64,7 +65,7 @@ reg_file rf(.clk(clk),
             .rs2_data(rs2_data),
             .rd_we(reg_we));
 
-instr_shift_register instr_shift( .clk(clk),
+instr_shift_register instr_shift( .clk(ard_clk),
                           .rst(rst),
                           .serial_in(in_bus),
                           .instruction(instr),
@@ -80,7 +81,7 @@ alu alu(.alu_input1(alu_input1),
         .op(dec.alu_op),
         .result(alu_result));
 
-pc_shift_reg pc_reg(.clk(clk),
+pc_shift_reg pc_reg(.clk(ard_clk),
                     .rst(rst),
                     .load(ctrl.pc_en),
                     .shift_out(ctrl.pc_shift_out),
@@ -89,7 +90,7 @@ pc_shift_reg pc_reg(.clk(clk),
                     .serial_out(pc_bus_out),
                     .error(error_pc));
 
-eight_bit_spispo mdr_shift_reg(.clk(clk),
+eight_bit_spispo mdr_shift_reg(.clk(ard_clk),
                              .rst(rst),
                              .load(ctrl.mdr_load),
                              .shift_out(ctrl.mdr_shift_out),
@@ -100,7 +101,7 @@ eight_bit_spispo mdr_shift_reg(.clk(clk),
                              .serial_out(mdr_bus_out),
                              .error(error_mdr));
 
-eight_bit_spispo mar_shift_reg(.clk(clk),
+eight_bit_spispo mar_shift_reg(.clk(ard_clk),
                               .rst(rst),
                               .load(ctrl.mar_load),
                               .shift_out(ctrl.mar_shift_out),

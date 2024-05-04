@@ -3,6 +3,7 @@
 module test();
 
   logic clk, rst;
+  logic ard_clk;
   logic ard_data_ready;
   logic ard_receive_ready;
   logic[7:0] in_bus;
@@ -19,6 +20,7 @@ module test();
   cpu_core cpu(.*);
 
 
+  assign ard_clk = clk;
 
   initial begin
     clk = 1'b0;
@@ -42,7 +44,6 @@ module test();
     @(posedge clk);
     
     while(~halt) begin
-      $display("PC: %h", pc);
       if(bus_pc) begin
         pc <= {out_bus, pc[15:8]};
         @(posedge clk);
@@ -106,45 +107,46 @@ module test();
     addr = 16'd4;
     a = 16'd5;
     b = 16'd6;
-    // result = a - b;
-    // instr_memory[0] = {SUB, 3'd1, 3'd0, 3'd0, I_TYPE};
-    // instr_memory[1] = a;
-    // instr_memory[2] = {SUB, 3'd2 , 3'd0, 3'd0, I_TYPE};
-    // instr_memory[3] = b;
-    // instr_memory[4] = {SUB, 3'd3, 3'd1 , 3'd2, R_TYPE};
-    // instr_memory[5] = {SW, 3'b100, 3'd3, 3'd0, M_TYPE};
-    // instr_memory[6] = addr;
-    // instr_memory[7] = {LW, 3'b010, 3'd0, 3'd0, M_TYPE};
-    // instr_memory[8] = addr;
-    // instr_memory[9] = {13'd0, SYS_END};
+    result = a - b;
+    instr_memory[0] = {SUB, 3'd1, 3'd0, 3'd0, I_TYPE};
+    instr_memory[1] = a;
+    instr_memory[2] = {SUB, 3'd2 , 3'd0, 3'd0, I_TYPE};
+    instr_memory[3] = b;
+    instr_memory[4] = {SUB, 3'd3, 3'd1 , 3'd2, R_TYPE};
+    instr_memory[5] = {SW, 3'b100, 3'd3, 3'd0, M_TYPE};
+    instr_memory[6] = addr;
+    instr_memory[7] = {LW, 3'b010, 3'd0, 3'd0, M_TYPE};
+    instr_memory[8] = addr;
+    instr_memory[9] = {13'd0, SYS_END};
 
-    // run_code();
+    run_code();
 
-    // assert(data_memory[address] == result) begin
-    //   $display("Data memory accurate");
-    // end 
-    // else begin
-    //   $error ("Failed assertion! Memory at address %h should be %b but is %b", addr, result, $signed(data_memory[address]));
-    // end 
+    assert(data_memory[address] == result) begin
+      $display("Data memory accurate");
+    end 
+    else begin
+      $error ("Failed assertion! Memory at address %h should be %b but is %b", addr, result, $signed(data_memory[address]));
+    end 
 
-    // assert(cpu.rf.reg_file[2] == result) begin
-    //    $display("Register 2 accurate");
-    // end 
-    // else begin
-    //   $error ("Failed assertion! Register 2 should be %d but is %d", result, cpu.rf.reg_file[2]);
-    // end
+    assert(cpu.rf.reg_file[2] == result) begin
+       $display("Register 2 accurate");
+    end 
+    else begin
+      $error ("Failed assertion! Register 2 should be %d but is %d", result, cpu.rf.reg_file[2]);
+    end
 
-    // $display("Subtract Test Case Passed!! Memory at address %h was %d, which is %d - %d.", addr, $signed(data_memory[address]), a, b);    
+    $display("Subtract and Memory OP Test Case Passed!! Memory at address %h was %d, which is %d - %d.", addr, $signed(data_memory[address]), a, b);    
 
     result = a + b;
-    instr_memory[0] = {BR_EQ, 4'd7, 3'd0, 3'd0, B_TYPE};
-    instr_memory[1] = {ADD, 3'd1, 3'd0, 3'd0, I_TYPE};
-    instr_memory[2] = a;
-    instr_memory[3] = {ADD, 3'd2 , 3'd0, 3'd0, I_TYPE};
-    instr_memory[4] = b;
-    instr_memory[5] = {ADD, 3'd3, 3'd1 , 3'd2, R_TYPE};
-    instr_memory[6] = {'b0, SYS_END};
-    instr_memory[7] = {BR_EQ, 4'b1001, 3'd0, 3'd0, B_TYPE};
+
+    instr_memory[0] = {ADD, 3'd1, 3'd0, 3'd0, I_TYPE};
+    instr_memory[1] = a;
+    instr_memory[2] = {ADD, 3'd2 , 3'd0, 3'd0, I_TYPE};
+    instr_memory[3] = b;
+    instr_memory[4] = {ADD, 3'd3, 3'd1 , 3'd2, R_TYPE};
+    instr_memory[5] = {SW, 3'd0, 3'd3, 3'd0, M_TYPE};
+    instr_memory[6] = addr;
+    instr_memory[7] = {'b0, SYS_END};
 
     run_code();
 
@@ -162,6 +164,69 @@ module test();
 
     $display("Add Test Case Passed!! Memory at address %h was %d, which is %d + %d.", addr, $signed(data_memory[address]), a, b);
 
+
+    a = 16'b1010;
+    b = 16'b1010;
+    result = a & b;
+
+    instr_memory[0] = {ADD, 3'd1, 3'd0, 3'd0, I_TYPE};
+    instr_memory[1] = a;
+    instr_memory[2] = {ADD, 3'd2 , 3'd0, 3'd0, I_TYPE};
+    instr_memory[3] = b;
+    instr_memory[4] = {AND, 3'd3, 3'd1 , 3'd2, R_TYPE};
+    instr_memory[5] = {SW, 3'd0, 3'd3, 3'd0, M_TYPE};
+    instr_memory[6] = addr;
+    instr_memory[7] = {'b0, SYS_END};
+
+    run_code();
+
+    assert(data_memory[address] == result)
+    else $error ("Failed assertion! Memory at address %h should be %b but is %b", addr, result, $signed(data_memory[address]));
+
+    assert(cpu.rf.reg_file[3] == result)
+    else $error ("Failed assertion! Register 3 should be %d but is %d", result, cpu.rf.reg_file[3]);
+
+    assert(cpu.rf.reg_file[1] == a)
+    else $error ("Failed assertion! Register 1 should be %d but is %d", a, cpu.rf.reg_file[1]);
+
+    assert(cpu.rf.reg_file[2] == b)
+    else $error ("Failed assertion! Register 2 should be %d but is %d", b, cpu.rf.reg_file[2]);
+
+    $display("AND Test Case Passed!! Memory at address %h was %d, which is %d + %d.", addr, $signed(data_memory[address]), a, b);
+
+
+    a = 16'b1010;
+    b = 16'b1010;
+    result = a | b;
+
+    instr_memory[0] = {ADD, 3'd1, 3'd0, 3'd0, I_TYPE};
+    instr_memory[1] = a;
+    instr_memory[2] = {ADD, 3'd2 , 3'd0, 3'd0, I_TYPE};
+    instr_memory[3] = b;
+    instr_memory[4] = {OR, 3'd3, 3'd1 , 3'd2, R_TYPE};
+    instr_memory[5] = {SW, 3'd0, 3'd3, 3'd0, M_TYPE};
+    instr_memory[6] = addr;
+    instr_memory[7] = {'b0, SYS_END};
+
+    run_code();
+
+    assert(data_memory[address] == result)
+    else $error ("Failed assertion! Memory at address %h should be %b but is %b", addr, result, $signed(data_memory[address]));
+
+    assert(cpu.rf.reg_file[3] == result)
+    else $error ("Failed assertion! Register 3 should be %d but is %d", result, cpu.rf.reg_file[3]);
+
+    assert(cpu.rf.reg_file[1] == a)
+    else $error ("Failed assertion! Register 1 should be %d but is %d", a, cpu.rf.reg_file[1]);
+
+    assert(cpu.rf.reg_file[2] == b)
+    else $error ("Failed assertion! Register 2 should be %d but is %d", b, cpu.rf.reg_file[2]);
+
+    $display("OR Test Case Passed!! Memory at address %h was %d, which is %d + %d.", addr, $signed(data_memory[address]), a, b);
+
+
+
+    $display("ALL CASES PASSED!!!!");
     $finish; 
   end
 
